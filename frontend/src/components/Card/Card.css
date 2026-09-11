@@ -1,0 +1,62 @@
+.financial-card {
+  padding: 24px;
+
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.financial-card:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.financial-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 20px;
+}
+
+.financial-card__title {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.financial-card__icon {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.financial-card__value {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #111827;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.financial-card__description {
+  color: #9ca3af;
+  font-size: 13px;
+}

@@ -1,0 +1,128 @@
+.recent-transactions {
+  width: 100%;
+  margin-top: 24px;
+  padding: 24px;
+
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.recent-transactions__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 20px;
+}
+
+.recent-transactions__header h2 {
+  margin-bottom: 5px;
+
+  color: #111827;
+  font-size: 18px;
+}
+
+.recent-transactions__header span {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.recent-transactions__link {
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.recent-transactions__link:hover {
+  text-decoration: underline;
+}
+
+.recent-transactions__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-transactions__item {
+  display: flex;
+  align-items: center;
+
+  padding: 16px 0;
+
+  border-top: 1px solid #f3f4f6;
+}
+
+.recent-transactions__icon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-right: 14px;
+
+  border-radius: 10px;
+
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.recent-transactions__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  flex: 1;
+}
+
+.recent-transactions__info strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.recent-transactions__info span {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.recent-transactions__amount {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.recent-transactions__amount--income {
+  color: #16a34a;
+}
+
+.recent-transactions__amount--expense {
+  color: #dc2626;
+}
+
+@media (max-width: 600px) {
+  .recent-transactions {
+    padding: 18px;
+  }
+
+  .recent-transactions__header {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .recent-transactions__item {
+    gap: 10px;
+  }
+
+  .recent-transactions__icon {
+    width: 38px;
+    height: 38px;
+    margin-right: 0;
+  }
+
+  .recent-transactions__amount {
+    font-size: 13px;
+  }
+}

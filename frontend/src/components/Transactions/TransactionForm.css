@@ -1,0 +1,108 @@
+.transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.transaction-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.transaction-form__field label {
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.transaction-form__field input,
+.transaction-form__field select {
+  width: 100%;
+  height: 42px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+
+  background-color: #ffffff;
+  color: #111827;
+
+  font-size: 14px;
+
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.transaction-form__field input:focus,
+.transaction-form__field select:focus {
+  outline: none;
+
+  border-color: #2563eb;
+
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.transaction-form__field input::placeholder {
+  color: #9ca3af;
+}
+
+.transaction-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 8px;
+  padding-top: 20px;
+
+  border-top: 1px solid #e5e7eb;
+}
+
+.transaction-form__actions button {
+  height: 40px;
+
+  padding: 0 16px;
+
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.transaction-form__cancel {
+  border: 1px solid #d1d5db;
+
+  background-color: #ffffff;
+  color: #374151;
+}
+
+.transaction-form__cancel:hover {
+  background-color: #f9fafb;
+}
+
+.transaction-form__submit {
+  border: 1px solid #2563eb;
+
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.transaction-form__submit:hover {
+  background-color: #1d4ed8;
+}
+
+@media (max-width: 500px) {
+  .transaction-form__actions {
+    flex-direction: column-reverse;
+  }
+
+  .transaction-form__actions button {
+    width: 100%;
+  }
+}

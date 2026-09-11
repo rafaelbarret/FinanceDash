@@ -1,0 +1,11 @@
+.reports {
+  padding: 0;
+}
+
+.reports h1 {
+  margin-bottom: 8px;
+}
+
+.reports p {
+  color: #6b7280;
+}

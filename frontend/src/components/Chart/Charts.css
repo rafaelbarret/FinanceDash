@@ -1,0 +1,32 @@
+.chart-card {
+  width: 100%;
+  padding: 24px;
+
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.chart-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 24px;
+}
+
+.chart-card__header h2 {
+  color: #111827;
+  font-size: 18px;
+}
+
+.chart-card__header span {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.chart-card__content {
+  width: 100%;
+}
