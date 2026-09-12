@@ -1,5 +1,10 @@
 import { useState } from 'react'
 
+import {
+  Pencil,
+  Trash2,
+} from 'lucide-react'
+
 import Modal from '../../components/Modal/Modal'
 import TransactionForm from '../../components/Transactions/TransactionForm'
 
@@ -7,6 +12,7 @@ import './Transactions.css'
 
 function Transactions() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState(null)
 
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -47,6 +53,62 @@ function Transactions() {
     },
   ])
 
+  function formatCurrency(value) {
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    })
+  }
+
+  function handleEditTransaction(transaction) {
+    setEditingTransaction(transaction)
+    setIsModalOpen(true)
+  }
+
+  function handleDeleteTransaction(id) {
+    const confirmed = window.confirm(
+      'Tem certeza que deseja excluir esta transação?'
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setTransactions((previousTransactions) =>
+      previousTransactions.filter(
+        (transaction) => transaction.id !== id
+      )
+    )
+  }
+
+  function handleSaveTransaction(transactionData) {
+    if (editingTransaction) {
+      setTransactions((previousTransactions) =>
+        previousTransactions.map((transaction) =>
+          transaction.id === editingTransaction.id
+            ? {
+              ...transaction,
+              ...transactionData,
+            }
+            : transaction
+        )
+      )
+    } else {
+      const newTransaction = {
+        ...transactionData,
+        id: Date.now(),
+      }
+
+      setTransactions((previousTransactions) => [
+        newTransaction,
+        ...previousTransactions,
+      ])
+    }
+
+    setEditingTransaction(null)
+    setIsModalOpen(false)
+  }
+
   const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch = transaction.description
       .toLowerCase()
@@ -67,27 +129,6 @@ function Transactions() {
     )
   })
 
-  function formatCurrency(value) {
-    return value.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    })
-  }
-
-  function handleAddTransaction(newTransaction) {
-    const transaction = {
-      ...newTransaction,
-      id: Date.now(),
-    }
-
-    setTransactions((previousTransactions) => [
-      transaction,
-      ...previousTransactions,
-    ])
-
-    setIsModalOpen(false)
-  }
-
   return (
     <section className="transactions">
       <div className="transactions__heading">
@@ -97,8 +138,12 @@ function Transactions() {
         </div>
 
         <button
+          type="button"
           className="transactions__add-button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingTransaction(null)
+            setIsModalOpen(true)
+          }}
         >
           + Nova transação
         </button>
@@ -123,17 +168,45 @@ function Transactions() {
 
         <select
           value={categoryFilter}
-          onChange={(event) => setCategoryFilter(event.target.value)}
+          onChange={(event) =>
+            setCategoryFilter(event.target.value)
+          }
         >
-          <option value="all">Todas as categorias</option>
-          <option value="Alimentação">Alimentação</option>
-          <option value="Transporte">Transporte</option>
-          <option value="Moradia">Moradia</option>
-          <option value="Lazer">Lazer</option>
-          <option value="Saúde">Saúde</option>
-          <option value="Educação">Educação</option>
-          <option value="Outros">Outros</option>
-          <option value="Receita">Receita</option>
+          <option value="all">
+            Todas as categorias
+          </option>
+
+          <option value="Alimentação">
+            Alimentação
+          </option>
+
+          <option value="Transporte">
+            Transporte
+          </option>
+
+          <option value="Moradia">
+            Moradia
+          </option>
+
+          <option value="Lazer">
+            Lazer
+          </option>
+
+          <option value="Saúde">
+            Saúde
+          </option>
+
+          <option value="Educação">
+            Educação
+          </option>
+
+          <option value="Outros">
+            Outros
+          </option>
+
+          <option value="Receita">
+            Receita
+          </option>
         </select>
       </div>
 
@@ -146,6 +219,7 @@ function Transactions() {
               <th>Tipo</th>
               <th>Data</th>
               <th>Valor</th>
+              <th>Ações</th>
             </tr>
           </thead>
 
@@ -157,7 +231,9 @@ function Transactions() {
                     {transaction.description}
                   </td>
 
-                  <td>{transaction.category}</td>
+                  <td>
+                    {transaction.category}
+                  </td>
 
                   <td>
                     <span
@@ -172,7 +248,9 @@ function Transactions() {
                     </span>
                   </td>
 
-                  <td>{transaction.date}</td>
+                  <td>
+                    {transaction.date}
+                  </td>
 
                   <td
                     className={`transactions__amount ${transaction.type === 'income'
@@ -180,15 +258,45 @@ function Transactions() {
                         : 'transactions__amount--expense'
                       }`}
                   >
-                    {transaction.type === 'income' ? '+' : '-'}
+                    {transaction.type === 'income'
+                      ? '+'
+                      : '-'}
                     {formatCurrency(transaction.amount)}
+                  </td>
+
+                  <td className="transactions__actions">
+                    <button
+                      type="button"
+                      className="transactions__action transactions__action--edit"
+                      onClick={() =>
+                        handleEditTransaction(transaction)
+                      }
+                      aria-label={`Editar ${transaction.description}`}
+                      title="Editar transação"
+                    >
+                      <Pencil size={17} />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="transactions__action transactions__action--delete"
+                      onClick={() =>
+                        handleDeleteTransaction(
+                          transaction.id
+                        )
+                      }
+                      aria-label={`Excluir ${transaction.description}`}
+                      title="Excluir transação"
+                    >
+                      <Trash2 size={17} />
+                    </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
                 <td
-                  colSpan="5"
+                  colSpan="6"
                   className="transactions__empty"
                 >
                   Nenhuma transação encontrada.
@@ -201,11 +309,24 @@ function Transactions() {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false)
+          setEditingTransaction(null)
+        }}
+        title={
+          editingTransaction
+            ? 'Editar transação'
+            : 'Nova transação'
+        }
       >
         <TransactionForm
-          onSubmit={handleAddTransaction}
-          onCancel={() => setIsModalOpen(false)}
+          key={editingTransaction?.id || 'new'}
+          transaction={editingTransaction}
+          onSubmit={handleSaveTransaction}
+          onCancel={() => {
+            setIsModalOpen(false)
+            setEditingTransaction(null)
+          }}
         />
       </Modal>
     </section>

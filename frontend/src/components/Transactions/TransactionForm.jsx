@@ -2,14 +2,18 @@ import { useState } from 'react'
 
 import './TransactionForm.css'
 
-function TransactionForm({ onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    description: '',
-    amount: '',
-    type: 'expense',
-    category: 'Alimentação',
-    date: '',
-  })
+function TransactionForm({
+  transaction,
+  onSubmit,
+  onCancel,
+}) {
+  const [formData, setFormData] = useState(() => ({
+    description: transaction?.description || '',
+    amount: transaction?.amount || '',
+    type: transaction?.type || 'expense',
+    category: transaction?.category || 'Alimentação',
+    date: transaction?.date || '',
+  }))
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -23,7 +27,11 @@ function TransactionForm({ onSubmit, onCancel }) {
   function handleSubmit(event) {
     event.preventDefault()
 
-    if (!formData.description || !formData.amount || !formData.date) {
+    if (
+      !formData.description.trim() ||
+      !formData.amount ||
+      !formData.date
+    ) {
       return
     }
 
@@ -34,7 +42,10 @@ function TransactionForm({ onSubmit, onCancel }) {
   }
 
   return (
-    <form className="transaction-form" onSubmit={handleSubmit}>
+    <form
+      className="transaction-form"
+      onSubmit={handleSubmit}
+    >
       <div className="transaction-form__field">
         <label htmlFor="description">
           Descrição

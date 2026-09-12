@@ -194,3 +194,50 @@
 
   text-align: center;
 }
+
+.transactions__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.transactions__action {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 7px;
+
+  background-color: transparent;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.transactions__action--edit {
+  color: #2563eb;
+}
+
+.transactions__action--edit:hover {
+  background-color: #eff6ff;
+}
+
+.transactions__action--delete {
+  color: #dc2626;
+}
+
+.transactions__action--delete:hover {
+  background-color: #fef2f2;
+}
+
+.transactions__table th:last-child {
+  text-align: right;
+}

@@ -2,7 +2,12 @@ import { X } from 'lucide-react'
 
 import './Modal.css'
 
-function Modal({ isOpen, onClose, children }) {
+function Modal({
+  isOpen,
+  onClose,
+  title = 'Nova transação',
+  children,
+}) {
   if (!isOpen) {
     return null
   }
@@ -14,7 +19,7 @@ function Modal({ isOpen, onClose, children }) {
         onClick={(event) => event.stopPropagation()}
       >
         <div className="modal__header">
-          <h2>Nova transação</h2>
+          <h2>{title}</h2>
 
           <button
             type="button"
