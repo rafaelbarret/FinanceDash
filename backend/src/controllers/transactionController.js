@@ -1,33 +1,26 @@
-import pool from '../config/database.js'
+import {
+  getTransactions as getTransactionsService,
+  createTransaction as createTransactionService,
+  updateTransaction as updateTransactionService,
+  deleteTransaction as deleteTransactionService,
+} from '../services/transactionService.js'
 
 export async function getTransactions(
   request,
   response
 ) {
   try {
-    const result = await pool.query(`
-      SELECT
-        id,
-        user_id,
-        category_id,
-        description,
-        amount,
-        type,
-        transaction_date,
-        created_at,
-        updated_at
-      FROM transactions
-      ORDER BY transaction_date DESC
-    `)
+    const transactions =
+      await getTransactionsService()
 
-    response.json(result.rows)
+    return response.json(transactions)
   } catch (error) {
     console.error(
       'Erro ao buscar transações:',
       error
     )
 
-    response.status(500).json({
+    return response.status(500).json({
       message: 'Erro ao buscar transações.',
     })
   }
@@ -38,80 +31,22 @@ export async function createTransaction(
   response
 ) {
   try {
-    const {
-      user_id,
-      category_id,
-      description,
-      amount,
-      type,
-      transaction_date,
-    } = request.body
+    const transaction =
+      await createTransactionService(
+        request.body
+      )
 
-    if (
-      !user_id ||
-      !description ||
-      !amount ||
-      !type ||
-      !transaction_date
-    ) {
-      return response.status(400).json({
-        message: 'Preencha todos os campos obrigatórios.',
-      })
-    }
-
-    if (!['income', 'expense'].includes(type)) {
-      return response.status(400).json({
-        message: 'Tipo de transação inválido.',
-      })
-    }
-
-    if (Number(amount) <= 0) {
-      return response.status(400).json({
-        message: 'O valor deve ser maior que zero.',
-      })
-    }
-
-    const result = await pool.query(
-      `
-        INSERT INTO transactions (
-          user_id,
-          category_id,
-          description,
-          amount,
-          type,
-          transaction_date
-        )
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING
-          id,
-          user_id,
-          category_id,
-          description,
-          amount,
-          type,
-          transaction_date,
-          created_at,
-          updated_at
-      `,
-      [
-        user_id,
-        category_id || null,
-        description,
-        amount,
-        type,
-        transaction_date,
-      ]
-    )
-
-    return response.status(201).json(result.rows[0])
+    return response.status(201).json(transaction)
   } catch (error) {
     console.error(
       'Erro ao criar transação:',
       error
     )
 
-    return response.status(500).json({
-      message: 'Erro ao criar transação.',
+    return response.status(
+      error.statusCode || 400
+    ).json({
+      message: error.message,
     })
   }
 }
@@ -123,84 +58,23 @@ export async function updateTransaction(
   try {
     const { id } = request.params
 
-    const {
-      category_id,
-      description,
-      amount,
-      type,
-      transaction_date,
-    } = request.body
-
-    if (
-      !description ||
-      !amount ||
-      !type ||
-      !transaction_date
-    ) {
-      return response.status(400).json({
-        message: 'Preencha todos os campos obrigatórios.',
-      })
-    }
-
-    if (!['income', 'expense'].includes(type)) {
-      return response.status(400).json({
-        message: 'Tipo de transação inválido.',
-      })
-    }
-
-    if (Number(amount) <= 0) {
-      return response.status(400).json({
-        message: 'O valor deve ser maior que zero.',
-      })
-    }
-
-    const result = await pool.query(
-      `
-        UPDATE transactions
-        SET
-          category_id = $1,
-          description = $2,
-          amount = $3,
-          type = $4,
-          transaction_date = $5,
-          updated_at = NOW()
-        WHERE id = $6
-        RETURNING
-          id,
-          user_id,
-          category_id,
-          description,
-          amount,
-          type,
-          transaction_date,
-          created_at,
-          updated_at
-      `,
-      [
-        category_id || null,
-        description,
-        amount,
-        type,
-        transaction_date,
+    const transaction =
+      await updateTransactionService(
         id,
-      ]
-    )
+        request.body
+      )
 
-    if (result.rows.length === 0) {
-      return response.status(404).json({
-        message: 'Transação não encontrada.',
-      })
-    }
-
-    return response.json(result.rows[0])
+    return response.json(transaction)
   } catch (error) {
     console.error(
       'Erro ao atualizar transação:',
       error
     )
 
-    return response.status(500).json({
-      message: 'Erro ao atualizar transação.',
+    return response.status(
+      error.statusCode || 400
+    ).json({
+      message: error.message,
     })
   }
 }
@@ -212,24 +86,11 @@ export async function deleteTransaction(
   try {
     const { id } = request.params
 
-    const result = await pool.query(
-      `
-        DELETE FROM transactions
-        WHERE id = $1
-        RETURNING id
-      `,
-      [id]
-    )
-
-    if (result.rows.length === 0) {
-      return response.status(404).json({
-        message: 'Transação não encontrada.',
-      })
-    }
+    await deleteTransactionService(id)
 
     return response.json({
       message: 'Transação excluída com sucesso.',
-      id: result.rows[0].id,
+      id,
     })
   } catch (error) {
     console.error(
@@ -237,8 +98,10 @@ export async function deleteTransaction(
       error
     )
 
-    return response.status(500).json({
-      message: 'Erro ao excluir transação.',
+    return response.status(
+      error.statusCode || 500
+    ).json({
+      message: error.message,
     })
   }
 }
