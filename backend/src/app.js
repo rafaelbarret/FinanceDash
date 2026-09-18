@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 
 import transactionRoutes from './routes/transactionRoutes.js'
+import categoryRoutes from './routes/categoryRoutes.js'
 
 const app = express()
 
@@ -17,6 +18,11 @@ app.get('/', (request, response) => {
 app.use(
   '/api/transactions',
   transactionRoutes
+)
+
+app.use(
+  '/api/categories',
+  categoryRoutes
 )
 
 export default app
