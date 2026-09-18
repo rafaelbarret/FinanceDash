@@ -3,17 +3,24 @@ import pool from '../config/database.js'
 export async function findAllTransactions() {
   const result = await pool.query(`
     SELECT
-      id,
-      user_id,
-      category_id,
-      description,
-      amount,
-      type,
-      transaction_date,
-      created_at,
-      updated_at
+      transactions.id,
+      transactions.user_id,
+      transactions.category_id,
+      transactions.description,
+      transactions.amount,
+      transactions.type,
+      transactions.transaction_date,
+      transactions.created_at,
+      transactions.updated_at,
+
+      categories.name AS category_name
+
     FROM transactions
-    ORDER BY transaction_date DESC
+
+    LEFT JOIN categories
+      ON transactions.category_id = categories.id
+
+    ORDER BY transactions.transaction_date DESC
   `)
 
   return result.rows
