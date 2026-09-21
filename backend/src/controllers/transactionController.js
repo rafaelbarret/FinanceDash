@@ -5,103 +5,101 @@ import {
   deleteTransaction as deleteTransactionService,
 } from '../services/transactionService.js'
 
-export async function getTransactions(
-  request,
-  response
-) {
+export async function getTransactions(request, response) {
   try {
-    const transactions =
-      await getTransactionsService()
+    const userId = request.user.userId
 
-    return response.json(transactions)
+    const transactions = await getTransactionsService(userId)
+
+    return response.status(200).json(transactions)
   } catch (error) {
     console.error(
       'Erro ao buscar transações:',
-      error
+      error.message
     )
 
-    return response.status(500).json({
-      message: 'Erro ao buscar transações.',
+    return response.status(error.statusCode || 500).json({
+      message: error.statusCode
+        ? error.message
+        : 'Erro interno do servidor.',
     })
   }
 }
 
-export async function createTransaction(
-  request,
-  response
-) {
+export async function createTransaction(request, response) {
   try {
-    const transaction =
-      await createTransactionService(
-        request.body
-      )
+    const userId = request.user.userId
+
+    const transactionData = {
+      ...request.body,
+      user_id: userId,
+    }
+
+    const transaction = await createTransactionService(
+      transactionData
+    )
 
     return response.status(201).json(transaction)
   } catch (error) {
     console.error(
       'Erro ao criar transação:',
-      error
+      error.message
     )
 
-    return response.status(
-      error.statusCode || 400
-    ).json({
-      message: error.message,
+    return response.status(error.statusCode || 500).json({
+      message: error.statusCode
+        ? error.message
+        : 'Erro interno do servidor.',
     })
   }
 }
 
-export async function updateTransaction(
-  request,
-  response
-) {
+export async function updateTransaction(request, response) {
   try {
+    const userId = request.user.userId
     const { id } = request.params
 
-    const transaction =
-      await updateTransactionService(
-        id,
-        request.body
-      )
+    const transaction = await updateTransactionService(
+      id,
+      userId,
+      request.body
+    )
 
-    return response.json(transaction)
+    return response.status(200).json(transaction)
   } catch (error) {
     console.error(
       'Erro ao atualizar transação:',
-      error
+      error.message
     )
 
-    return response.status(
-      error.statusCode || 400
-    ).json({
-      message: error.message,
+    return response.status(error.statusCode || 500).json({
+      message: error.statusCode
+        ? error.message
+        : 'Erro interno do servidor.',
     })
   }
 }
 
-export async function deleteTransaction(
-  request,
-  response
-) {
+export async function deleteTransaction(request, response) {
   try {
+    const userId = request.user.userId
     const { id } = request.params
 
-    await deleteTransactionService(id)
+    await deleteTransactionService(id, userId)
 
-    return response.json({
-      message: 'Transação excluída com sucesso.',
-      id,
+    return response.status(200).json({
+      message: 'Transação excluída com sucesso!',
     })
   } catch (error) {
     console.error(
       'Erro ao excluir transação:',
-      error
+      error.message
     )
 
-    return response.status(
-      error.statusCode || 500
-    ).json({
-      message: error.message,
+    return response.status(error.statusCode || 500).json({
+      message: error.statusCode
+        ? error.message
+        : 'Erro interno do servidor.',
     })
   }
 }

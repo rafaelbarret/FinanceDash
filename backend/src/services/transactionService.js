@@ -5,8 +5,8 @@ import {
   deleteTransaction as deleteTransactionRepository,
 } from '../repositories/transactionRepository.js'
 
-export async function getTransactions() {
-  return findAllTransactions()
+export async function getTransactions(userId) {
+  return findAllTransactions(userId)
 }
 
 export async function createTransaction(data) {
@@ -25,27 +25,43 @@ export async function createTransaction(data) {
     !type ||
     !transaction_date
   ) {
-    throw new Error(
-      'Preencha todos os campos obrigatórios.'
+    const error = new Error(
+      'Todos os campos obrigatórios devem ser preenchidos.'
     )
+
+    error.statusCode = 400
+
+    throw error
   }
 
   if (!['income', 'expense'].includes(type)) {
-    throw new Error(
-      'Tipo de transação inválido.'
+    const error = new Error(
+      'O tipo deve ser income ou expense.'
     )
+
+    error.statusCode = 400
+
+    throw error
   }
 
   if (Number(amount) <= 0) {
-    throw new Error(
+    const error = new Error(
       'O valor deve ser maior que zero.'
     )
+
+    error.statusCode = 400
+
+    throw error
   }
 
   return createTransactionRepository(data)
 }
 
-export async function updateTransaction(id, data) {
+export async function updateTransaction(
+  id,
+  userId,
+  data
+) {
   const {
     description,
     amount,
@@ -59,28 +75,40 @@ export async function updateTransaction(id, data) {
     !type ||
     !transaction_date
   ) {
-    throw new Error(
-      'Preencha todos os campos obrigatórios.'
+    const error = new Error(
+      'Todos os campos obrigatórios devem ser preenchidos.'
     )
+
+    error.statusCode = 400
+
+    throw error
   }
 
   if (!['income', 'expense'].includes(type)) {
-    throw new Error(
-      'Tipo de transação inválido.'
+    const error = new Error(
+      'O tipo deve ser income ou expense.'
     )
+
+    error.statusCode = 400
+
+    throw error
   }
 
   if (Number(amount) <= 0) {
-    throw new Error(
+    const error = new Error(
       'O valor deve ser maior que zero.'
     )
+
+    error.statusCode = 400
+
+    throw error
   }
 
-  const transaction =
-    await updateTransactionRepository(
-      id,
-      data
-    )
+  const transaction = await updateTransactionRepository(
+    id,
+    userId,
+    data
+  )
 
   if (!transaction) {
     const error = new Error(
@@ -95,9 +123,14 @@ export async function updateTransaction(id, data) {
   return transaction
 }
 
-export async function deleteTransaction(id) {
-  const transaction =
-    await deleteTransactionRepository(id)
+export async function deleteTransaction(
+  id,
+  userId
+) {
+  const transaction = await deleteTransactionRepository(
+    id,
+    userId
+  )
 
   if (!transaction) {
     const error = new Error(
