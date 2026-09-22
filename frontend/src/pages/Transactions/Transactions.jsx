@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   Pencil,
@@ -7,6 +7,12 @@ import {
 
 import Modal from '../../components/Modal/Modal'
 import TransactionForm from '../../components/Transactions/TransactionForm'
+
+import {
+  getTransactions,
+  deleteTransaction,
+  updateTransaction,
+} from '../../services/transactionService'
 
 import './Transactions.css'
 
@@ -18,46 +24,54 @@ function Transactions() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
 
-  const [transactions, setTransactions] = useState([
-    {
-      id: 1,
-      description: 'Salário',
-      category: 'Receita',
-      type: 'income',
-      date: '05/09/2026',
-      amount: 5200,
-    },
-    {
-      id: 2,
-      description: 'Supermercado',
-      category: 'Alimentação',
-      type: 'expense',
-      date: '04/09/2026',
-      amount: 320,
-    },
-    {
-      id: 3,
-      description: 'Combustível',
-      category: 'Transporte',
-      type: 'expense',
-      date: '03/09/2026',
-      amount: 180,
-    },
-    {
-      id: 4,
-      description: 'Steam',
-      category: 'Lazer',
-      type: 'expense',
-      date: '02/09/2026',
-      amount: 89.9,
-    },
-  ])
+  const [transactions, setTransactions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    async function loadTransactions() {
+      try {
+        setLoading(true)
+        setError('')
+
+        const data = await getTransactions()
+
+        setTransactions(data)
+      } catch (error) {
+        console.error(
+          'Erro ao carregar transações:',
+          error
+        )
+
+        setError(
+          error.response?.data?.message ||
+          'Não foi possível carregar as transações.'
+        )
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadTransactions()
+  }, [])
 
   function formatCurrency(value) {
-    return value.toLocaleString('pt-BR', {
+    return Number(value).toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     })
+  }
+
+  function formatDate(date) {
+    if (!date) {
+      return ''
+    }
+
+    const [year, month, day] = date
+      .slice(0, 10)
+      .split('-')
+
+    return `${day}/${month}/${year}`
   }
 
   function handleEditTransaction(transaction) {
@@ -65,7 +79,7 @@ function Transactions() {
     setIsModalOpen(true)
   }
 
-  function handleDeleteTransaction(id) {
+  async function handleDeleteTransaction(id) {
     const confirmed = window.confirm(
       'Tem certeza que deseja excluir esta transação?'
     )
@@ -74,67 +88,102 @@ function Transactions() {
       return
     }
 
-    setTransactions((previousTransactions) =>
-      previousTransactions.filter(
-        (transaction) => transaction.id !== id
-      )
-    )
-  }
+    try {
+      await deleteTransaction(id)
 
-  function handleSaveTransaction(transactionData) {
-    if (editingTransaction) {
       setTransactions((previousTransactions) =>
-        previousTransactions.map((transaction) =>
-          transaction.id === editingTransaction.id
-            ? {
-              ...transaction,
-              ...transactionData,
-            }
-            : transaction
+        previousTransactions.filter(
+          (transaction) => transaction.id !== id
         )
       )
-    } else {
-      const newTransaction = {
-        ...transactionData,
-        id: Date.now(),
-      }
+    } catch (error) {
+      console.error(
+        'Erro ao excluir transação:',
+        error
+      )
 
-      setTransactions((previousTransactions) => [
-        newTransaction,
-        ...previousTransactions,
-      ])
+      window.alert(
+        error.response?.data?.message ||
+        'Não foi possível excluir a transação.'
+      )
     }
-
-    setEditingTransaction(null)
-    setIsModalOpen(false)
   }
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    const matchesSearch = transaction.description
-      .toLowerCase()
-      .includes(search.toLowerCase())
 
-    const matchesType =
-      typeFilter === 'all' ||
-      transaction.type === typeFilter
+  async function handleSaveTransaction(
+    transactionData
+  ) {
+    try {
+      if (editingTransaction) {
+        const updatedTransaction =
+          await updateTransaction(
+            editingTransaction.id,
+            transactionData
+          )
 
-    const matchesCategory =
-      categoryFilter === 'all' ||
-      transaction.category === categoryFilter
+        setTransactions(
+          (previousTransactions) =>
+            previousTransactions.map(
+              (transaction) =>
+                transaction.id ===
+                  editingTransaction.id
+                  ? {
+                    ...transaction,
+                    ...updatedTransaction,
+                  }
+                  : transaction
+            )
+        )
+      }
 
-    return (
-      matchesSearch &&
-      matchesType &&
-      matchesCategory
-    )
-  })
+      setEditingTransaction(null)
+      setIsModalOpen(false)
+    } catch (error) {
+      console.error(
+        'Erro ao salvar transação:',
+        error
+      )
+
+      window.alert(
+        error.response?.data?.message ||
+        'Não foi possível salvar a transação.'
+      )
+    }
+  }
+
+
+
+  const filteredTransactions = transactions.filter(
+    (transaction) => {
+      const matchesSearch =
+        transaction.description
+          .toLowerCase()
+          .includes(search.toLowerCase())
+
+      const matchesType =
+        typeFilter === 'all' ||
+        transaction.type === typeFilter
+
+      const matchesCategory =
+        categoryFilter === 'all' ||
+        transaction.category === categoryFilter
+
+      return (
+        matchesSearch &&
+        matchesType &&
+        matchesCategory
+      )
+    }
+  )
 
   return (
     <section className="transactions">
       <div className="transactions__heading">
         <div>
           <h1>Transações</h1>
-          <p>Gerencie suas receitas e despesas.</p>
+          <p>
+            Gerencie suas receitas e despesas.
+          </p>
         </div>
 
         <button
@@ -154,12 +203,16 @@ function Transactions() {
           type="text"
           placeholder="Buscar transação..."
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) =>
+            setSearch(event.target.value)
+          }
         />
 
         <select
           value={typeFilter}
-          onChange={(event) => setTypeFilter(event.target.value)}
+          onChange={(event) =>
+            setTypeFilter(event.target.value)
+          }
         >
           <option value="all">Todos</option>
           <option value="income">Receitas</option>
@@ -224,75 +277,103 @@ function Transactions() {
           </thead>
 
           <tbody>
-            {filteredTransactions.length > 0 ? (
-              filteredTransactions.map((transaction) => (
-                <tr key={transaction.id}>
-                  <td className="transactions__description">
-                    {transaction.description}
-                  </td>
+            {loading ? (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="transactions__empty"
+                >
+                  Carregando transações...
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="transactions__empty"
+                >
+                  {error}
+                </td>
+              </tr>
+            ) : filteredTransactions.length > 0 ? (
+              filteredTransactions.map(
+                (transaction) => (
+                  <tr key={transaction.id}>
+                    <td className="transactions__description">
+                      {transaction.description}
+                    </td>
 
-                  <td>
-                    {transaction.category}
-                  </td>
+                    <td>
+                      {transaction.category ||
+                        'Sem categoria'}
+                    </td>
 
-                  <td>
-                    <span
-                      className={`transactions__type ${transaction.type === 'income'
+                    <td>
+                      <span
+                        className={`transactions__type ${transaction.type === 'income'
                           ? 'transactions__type--income'
                           : 'transactions__type--expense'
+                          }`}
+                      >
+                        {transaction.type === 'income'
+                          ? 'Receita'
+                          : 'Despesa'}
+                      </span>
+                    </td>
+
+                    <td>
+                      {formatDate(
+                        transaction.transaction_date ||
+                        transaction.date
+                      )}
+                    </td>
+
+                    <td
+                      className={`transactions__amount ${transaction.type === 'income'
+                        ? 'transactions__amount--income'
+                        : 'transactions__amount--expense'
                         }`}
                     >
                       {transaction.type === 'income'
-                        ? 'Receita'
-                        : 'Despesa'}
-                    </span>
-                  </td>
+                        ? '+'
+                        : '-'}
+                      {formatCurrency(
+                        transaction.amount
+                      )}
+                    </td>
 
-                  <td>
-                    {transaction.date}
-                  </td>
+                    <td className="transactions__actions">
+                      <button
+                        type="button"
+                        className="transactions__action transactions__action--edit"
+                        onClick={() =>
+                          handleEditTransaction(
+                            transaction
+                          )
+                        }
+                        aria-label={`Editar ${transaction.description}`}
+                        title="Editar transação"
+                      >
+                        <Pencil size={17} />
+                      </button>
 
-                  <td
-                    className={`transactions__amount ${transaction.type === 'income'
-                        ? 'transactions__amount--income'
-                        : 'transactions__amount--expense'
-                      }`}
-                  >
-                    {transaction.type === 'income'
-                      ? '+'
-                      : '-'}
-                    {formatCurrency(transaction.amount)}
-                  </td>
-
-                  <td className="transactions__actions">
-                    <button
-                      type="button"
-                      className="transactions__action transactions__action--edit"
-                      onClick={() =>
-                        handleEditTransaction(transaction)
-                      }
-                      aria-label={`Editar ${transaction.description}`}
-                      title="Editar transação"
-                    >
-                      <Pencil size={17} />
-                    </button>
-
-                    <button
-                      type="button"
-                      className="transactions__action transactions__action--delete"
-                      onClick={() =>
-                        handleDeleteTransaction(
-                          transaction.id
-                        )
-                      }
-                      aria-label={`Excluir ${transaction.description}`}
-                      title="Excluir transação"
-                    >
-                      <Trash2 size={17} />
-                    </button>
-                  </td>
-                </tr>
-              ))
+                      <button
+                        type="button"
+                        className="transactions__action transactions__action--delete"
+                        onClick={() =>
+                          handleDeleteTransaction(
+                            transaction.id
+                          )
+                        }
+                        aria-label={`Excluir ${transaction.description}`}
+                        title="Excluir transação"
+                      >
+                        <Trash2 size={17} />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )
             ) : (
               <tr>
                 <td
@@ -334,3 +415,4 @@ function Transactions() {
 }
 
 export default Transactions
+
