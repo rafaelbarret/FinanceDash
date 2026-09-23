@@ -12,7 +12,10 @@ function TransactionForm({
     amount: transaction?.amount || '',
     type: transaction?.type || 'expense',
     category: transaction?.category || 'Alimentação',
-    date: transaction?.date || '',
+    date:
+      transaction?.transaction_date ||
+      transaction?.date ||
+      '',
   }))
 
   function handleChange(event) {
@@ -36,8 +39,11 @@ function TransactionForm({
     }
 
     onSubmit({
-      ...formData,
+      description: formData.description,
       amount: Number(formData.amount),
+      type: formData.type,
+      category: formData.category,
+      transaction_date: formData.date,
     })
   }
 
