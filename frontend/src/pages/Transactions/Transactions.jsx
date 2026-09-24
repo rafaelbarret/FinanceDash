@@ -12,6 +12,7 @@ import {
   getTransactions,
   deleteTransaction,
   updateTransaction,
+  createTransaction,
 } from '../../services/transactionService'
 
 import './Transactions.css'
@@ -110,46 +111,56 @@ function Transactions() {
   }
 
 
-  async function handleSaveTransaction(
-    transactionData
-  ) {
-    try {
-      if (editingTransaction) {
-        const updatedTransaction =
-          await updateTransaction(
-            editingTransaction.id,
-            transactionData
-          )
+async function handleSaveTransaction(transactionData) {
+  try {
+    if (editingTransaction) {
+      // Atualizar transação existente
+      const updatedTransaction =
+        await updateTransaction(
+          editingTransaction.id,
+          transactionData
+        )
 
-        setTransactions(
-          (previousTransactions) =>
-            previousTransactions.map(
-              (transaction) =>
-                transaction.id ===
-                  editingTransaction.id
-                  ? {
+      setTransactions(
+        (previousTransactions) =>
+          previousTransactions.map(
+            (transaction) =>
+              transaction.id ===
+              editingTransaction.id
+                ? {
                     ...transaction,
                     ...updatedTransaction,
                   }
-                  : transaction
-            )
-        )
-      }
-
-      setEditingTransaction(null)
-      setIsModalOpen(false)
-    } catch (error) {
-      console.error(
-        'Erro ao salvar transação:',
-        error
+                : transaction
+          )
       )
+    } else {
+      // Criar nova transação
+      const newTransaction =
+        await createTransaction(transactionData)
 
-      window.alert(
-        error.response?.data?.message ||
-        'Não foi possível salvar a transação.'
+      setTransactions(
+        (previousTransactions) => [
+          newTransaction,
+          ...previousTransactions,
+        ]
       )
     }
+
+    setEditingTransaction(null)
+    setIsModalOpen(false)
+  } catch (error) {
+    console.error(
+      'Erro ao salvar transação:',
+      error
+    )
+
+    window.alert(
+      error.response?.data?.message ||
+        'Não foi possível salvar a transação.'
+    )
   }
+}
 
 
 

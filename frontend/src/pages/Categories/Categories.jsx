@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+
 import {
   Pencil,
   Trash2,
@@ -6,61 +7,75 @@ import {
 
 import Modal from '../../components/Modal/Modal'
 
+import {
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from '../../services/categoryService'
+
 import './Categories.css'
+
+const categoryIcons = {
+  Alimentação: '🛒',
+  Transporte: '🚗',
+  Moradia: '🏠',
+  Lazer: '🎮',
+  Saúde: '❤️',
+  Educação: '📚',
+  Outros: '📦',
+  Trabalho: '💼',
+  Viagem: '✈️',
+}
 
 function Categories() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState(null)
 
   const [search, setSearch] = useState('')
-
-  const [categories, setCategories] = useState([
-    {
-      id: 1,
-      name: 'Alimentação',
-      icon: '🛒',
-      transactions: 1,
-    },
-    {
-      id: 2,
-      name: 'Transporte',
-      icon: '🚗',
-      transactions: 1,
-    },
-    {
-      id: 3,
-      name: 'Moradia',
-      icon: '🏠',
-      transactions: 0,
-    },
-    {
-      id: 4,
-      name: 'Lazer',
-      icon: '🎮',
-      transactions: 1,
-    },
-    {
-      id: 5,
-      name: 'Saúde',
-      icon: '❤️',
-      transactions: 0,
-    },
-    {
-      id: 6,
-      name: 'Educação',
-      icon: '📚',
-      transactions: 0,
-    },
-    {
-      id: 7,
-      name: 'Outros',
-      icon: '📦',
-      transactions: 0,
-    },
-  ])
+  const [categories, setCategories] = useState([])
 
   const [categoryName, setCategoryName] = useState('')
   const [categoryIcon, setCategoryIcon] = useState('📦')
+
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        setLoading(true)
+        setError('')
+
+        const data = await getCategories()
+
+        const formattedCategories = data.map(
+          (category) => ({
+            ...category,
+            icon:
+              categoryIcons[category.name] || '📦',
+            transactions: 0,
+          })
+        )
+
+        setCategories(formattedCategories)
+      } catch (error) {
+        console.error(
+          'Erro ao carregar categorias:',
+          error
+        )
+
+        setError(
+          error.response?.data?.message ||
+            'Não foi possível carregar as categorias.'
+        )
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCategories()
+  }, [])
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -79,7 +94,7 @@ function Categories() {
   function handleEdit(category) {
     setEditingCategory(category)
     setCategoryName(category.name)
-    setCategoryIcon(category.icon)
+    setCategoryIcon(category.icon || '📦')
     setIsModalOpen(true)
   }
 
@@ -90,43 +105,66 @@ function Categories() {
     setCategoryIcon('📦')
   }
 
-  function handleSaveCategory(event) {
+  async function handleSaveCategory(event) {
     event.preventDefault()
 
-    if (!categoryName.trim()) {
+    const name = categoryName.trim()
+
+    if (!name) {
       return
     }
 
-    if (editingCategory) {
-      setCategories((previousCategories) =>
-        previousCategories.map((category) =>
-          category.id === editingCategory.id
-            ? {
-                ...category,
-                name: categoryName.trim(),
-                icon: categoryIcon,
-              }
-            : category
+    try {
+      if (editingCategory) {
+        const updatedCategory =
+          await updateCategory(
+            editingCategory.id,
+            name
+          )
+
+        setCategories(
+          (previousCategories) =>
+            previousCategories.map((category) =>
+              category.id === editingCategory.id
+                ? {
+                    ...category,
+                    ...updatedCategory,
+                    icon: categoryIcon,
+                  }
+                : category
+            )
         )
-      )
-    } else {
-      const newCategory = {
-        id: Date.now(),
-        name: categoryName.trim(),
-        icon: categoryIcon,
-        transactions: 0,
+      } else {
+        const newCategory =
+          await createCategory(name)
+
+        setCategories(
+          (previousCategories) => [
+            ...previousCategories,
+            {
+              ...newCategory,
+              icon: categoryIcon,
+              transactions: 0,
+            },
+          ]
+        )
       }
 
-      setCategories((previousCategories) => [
-        ...previousCategories,
-        newCategory,
-      ])
-    }
+      handleCloseModal()
+    } catch (error) {
+      console.error(
+        'Erro ao salvar categoria:',
+        error
+      )
 
-    handleCloseModal()
+      window.alert(
+        error.response?.data?.message ||
+          'Não foi possível salvar a categoria.'
+      )
+    }
   }
 
-  function handleDelete(category) {
+  async function handleDelete(category) {
     const confirmed = window.confirm(
       `Tem certeza que deseja excluir a categoria "${category.name}"?`
     )
@@ -135,11 +173,26 @@ function Categories() {
       return
     }
 
-    setCategories((previousCategories) =>
-      previousCategories.filter(
-        (item) => item.id !== category.id
+    try {
+      await deleteCategory(category.id)
+
+      setCategories(
+        (previousCategories) =>
+          previousCategories.filter(
+            (item) => item.id !== category.id
+          )
       )
-    )
+    } catch (error) {
+      console.error(
+        'Erro ao excluir categoria:',
+        error
+      )
+
+      window.alert(
+        error.response?.data?.message ||
+          'Não foi possível excluir a categoria.'
+      )
+    }
   }
 
   return (
@@ -147,6 +200,7 @@ function Categories() {
       <div className="categories__heading">
         <div>
           <h1>Categorias</h1>
+
           <p>
             Organize suas receitas e despesas por categoria.
           </p>
@@ -183,7 +237,25 @@ function Categories() {
           </thead>
 
           <tbody>
-            {filteredCategories.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td
+                  colSpan="3"
+                  className="categories__empty"
+                >
+                  Carregando categorias...
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td
+                  colSpan="3"
+                  className="categories__empty"
+                >
+                  {error}
+                </td>
+              </tr>
+            ) : filteredCategories.length > 0 ? (
               filteredCategories.map((category) => (
                 <tr key={category.id}>
                   <td>
@@ -284,15 +356,41 @@ function Categories() {
                 setCategoryIcon(event.target.value)
               }
             >
-              <option value="🛒">🛒 Alimentação</option>
-              <option value="🚗">🚗 Transporte</option>
-              <option value="🏠">🏠 Moradia</option>
-              <option value="🎮">🎮 Lazer</option>
-              <option value="❤️">❤️ Saúde</option>
-              <option value="📚">📚 Educação</option>
-              <option value="📦">📦 Outros</option>
-              <option value="💼">💼 Trabalho</option>
-              <option value="✈️">✈️ Viagem</option>
+              <option value="🛒">
+                🛒 Alimentação
+              </option>
+
+              <option value="🚗">
+                🚗 Transporte
+              </option>
+
+              <option value="🏠">
+                🏠 Moradia
+              </option>
+
+              <option value="🎮">
+                🎮 Lazer
+              </option>
+
+              <option value="❤️">
+                ❤️ Saúde
+              </option>
+
+              <option value="📚">
+                📚 Educação
+              </option>
+
+              <option value="📦">
+                📦 Outros
+              </option>
+
+              <option value="💼">
+                💼 Trabalho
+              </option>
+
+              <option value="✈️">
+                ✈️ Viagem
+              </option>
             </select>
           </div>
 
