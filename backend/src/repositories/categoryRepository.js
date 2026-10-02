@@ -4,13 +4,27 @@ export async function findAllCategories(userId) {
   const result = await pool.query(
     `
       SELECT
-        id,
-        user_id,
-        name,
-        created_at
+        categories.id,
+        categories.user_id,
+        categories.name,
+        categories.created_at,
+        COUNT(transactions.id)::INTEGER AS transaction_count
+
       FROM categories
-      WHERE user_id = $1
-      ORDER BY name ASC
+
+      LEFT JOIN transactions
+        ON transactions.category_id = categories.id
+        AND transactions.user_id = categories.user_id
+
+      WHERE categories.user_id = $1
+
+      GROUP BY
+        categories.id,
+        categories.user_id,
+        categories.name,
+        categories.created_at
+
+      ORDER BY categories.name ASC
     `,
     [userId]
   )

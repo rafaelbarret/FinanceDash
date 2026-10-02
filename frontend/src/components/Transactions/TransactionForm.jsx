@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+
+import { getCategories } from '../../services/categoryService'
 
 import './TransactionForm.css'
 
@@ -7,16 +9,55 @@ function TransactionForm({
   onSubmit,
   onCancel,
 }) {
+  const [categories, setCategories] = useState([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
+
   const [formData, setFormData] = useState(() => ({
     description: transaction?.description || '',
     amount: transaction?.amount || '',
     type: transaction?.type || 'expense',
-    category: transaction?.category || 'Alimentação',
+    category_id: transaction?.category_id || '',
     date:
       transaction?.transaction_date ||
       transaction?.date ||
       '',
   }))
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await getCategories()
+
+        setCategories(data)
+
+        // Ao editar, mantém a categoria já vinculada.
+        // Se o registro antigo não tiver category_id,
+        // tenta localizar a categoria pelo nome.
+        if (transaction && !transaction.category_id) {
+          const matchingCategory = data.find(
+            (category) =>
+              category.name === transaction.category
+          )
+
+          if (matchingCategory) {
+            setFormData((previousData) => ({
+              ...previousData,
+              category_id: matchingCategory.id,
+            }))
+          }
+        }
+      } catch (error) {
+        console.error(
+          'Erro ao carregar categorias:',
+          error
+        )
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+
+    loadCategories()
+  }, [transaction])
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -33,7 +74,8 @@ function TransactionForm({
     if (
       !formData.description.trim() ||
       !formData.amount ||
-      !formData.date
+      !formData.date ||
+      !formData.category_id
     ) {
       return
     }
@@ -42,7 +84,7 @@ function TransactionForm({
       description: formData.description,
       amount: Number(formData.amount),
       type: formData.type,
-      category: formData.category,
+      category_id: formData.category_id,
       transaction_date: formData.date,
     })
   }
@@ -106,43 +148,34 @@ function TransactionForm({
       </div>
 
       <div className="transaction-form__field">
-        <label htmlFor="category">
+        <label htmlFor="category_id">
           Categoria
         </label>
 
         <select
-          id="category"
-          name="category"
-          value={formData.category}
+          id="category_id"
+          name="category_id"
+          value={formData.category_id}
           onChange={handleChange}
+          disabled={loadingCategories || categories.length === 0}
+          required
         >
-          <option value="Alimentação">
-            Alimentação
+          <option value="">
+            {loadingCategories
+              ? 'Carregando categorias...'
+              : categories.length === 0
+                ? 'Nenhuma categoria cadastrada'
+                : 'Selecione uma categoria'}
           </option>
 
-          <option value="Transporte">
-            Transporte
-          </option>
-
-          <option value="Moradia">
-            Moradia
-          </option>
-
-          <option value="Lazer">
-            Lazer
-          </option>
-
-          <option value="Saúde">
-            Saúde
-          </option>
-
-          <option value="Educação">
-            Educação
-          </option>
-
-          <option value="Outros">
-            Outros
-          </option>
+          {categories.map((category) => (
+            <option
+              key={category.id}
+              value={category.id}
+            >
+              {category.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -172,6 +205,7 @@ function TransactionForm({
         <button
           type="submit"
           className="transaction-form__submit"
+          disabled={loadingCategories || categories.length === 0}
         >
           Salvar transação
         </button>

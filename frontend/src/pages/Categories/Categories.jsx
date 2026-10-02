@@ -49,14 +49,11 @@ function Categories() {
 
         const data = await getCategories()
 
-        const formattedCategories = data.map(
-          (category) => ({
-            ...category,
-            icon:
-              categoryIcons[category.name] || '📦',
-            transactions: 0,
-          })
-        )
+        const formattedCategories = data.map((category) => ({
+          ...category,
+          icon: categoryIcons[category.name] || '📦',
+          transactions: Number(category.transaction_count || 0),
+        }))
 
         setCategories(formattedCategories)
       } catch (error) {
@@ -67,7 +64,7 @@ function Categories() {
 
         setError(
           error.response?.data?.message ||
-            'Não foi possível carregar as categorias.'
+          'Não foi possível carregar as categorias.'
         )
       } finally {
         setLoading(false)
@@ -127,10 +124,10 @@ function Categories() {
             previousCategories.map((category) =>
               category.id === editingCategory.id
                 ? {
-                    ...category,
-                    ...updatedCategory,
-                    icon: categoryIcon,
-                  }
+                  ...category,
+                  ...updatedCategory,
+                  icon: categoryIcon,
+                }
                 : category
             )
         )
@@ -159,7 +156,7 @@ function Categories() {
 
       window.alert(
         error.response?.data?.message ||
-          'Não foi possível salvar a categoria.'
+        'Não foi possível salvar a categoria.'
       )
     }
   }
@@ -190,7 +187,7 @@ function Categories() {
 
       window.alert(
         error.response?.data?.message ||
-          'Não foi possível excluir a categoria.'
+        'Não foi possível excluir a categoria.'
       )
     }
   }

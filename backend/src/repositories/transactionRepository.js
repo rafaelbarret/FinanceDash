@@ -13,11 +13,16 @@ export async function findAllTransactions(userId) {
         transactions.transaction_date,
         transactions.created_at,
         transactions.updated_at,
-        categories.name AS category_name
+        categories.name AS category
+
       FROM transactions
+
       LEFT JOIN categories
         ON transactions.category_id = categories.id
+        AND categories.user_id = transactions.user_id
+
       WHERE transactions.user_id = $1
+
       ORDER BY transactions.transaction_date DESC
     `,
     [userId]
@@ -47,6 +52,7 @@ export async function createTransaction(data) {
         transaction_date
       )
       VALUES ($1, $2, $3, $4, $5, $6)
+
       RETURNING
         id,
         user_id,
@@ -68,7 +74,22 @@ export async function createTransaction(data) {
     ]
   )
 
-  return result.rows[0]
+  const transaction = result.rows[0]
+
+  const categoryResult = await pool.query(
+    `
+      SELECT name
+      FROM categories
+      WHERE id = $1
+        AND user_id = $2
+    `,
+    [transaction.category_id, user_id]
+  )
+
+  return {
+    ...transaction,
+    category: categoryResult.rows[0]?.name || null,
+  }
 }
 
 export async function updateTransaction(
@@ -87,6 +108,7 @@ export async function updateTransaction(
   const result = await pool.query(
     `
       UPDATE transactions
+
       SET
         category_id = $1,
         description = $2,
@@ -94,8 +116,10 @@ export async function updateTransaction(
         type = $4,
         transaction_date = $5,
         updated_at = NOW()
+
       WHERE id = $6
         AND user_id = $7
+
       RETURNING
         id,
         user_id,
@@ -118,13 +142,29 @@ export async function updateTransaction(
     ]
   )
 
-  return result.rows[0]
+  if (!result.rows[0]) {
+    return null
+  }
+
+  const transaction = result.rows[0]
+
+  const categoryResult = await pool.query(
+    `
+      SELECT name
+      FROM categories
+      WHERE id = $1
+        AND user_id = $2
+    `,
+    [transaction.category_id, userId]
+  )
+
+  return {
+    ...transaction,
+    category: categoryResult.rows[0]?.name || null,
+  }
 }
 
-export async function deleteTransaction(
-  id,
-  userId
-) {
+export async function deleteTransaction(id, userId) {
   const result = await pool.query(
     `
       DELETE FROM transactions

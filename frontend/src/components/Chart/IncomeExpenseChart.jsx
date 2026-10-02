@@ -11,40 +11,63 @@ import {
 
 import './Charts.css'
 
-const data = [
-  {
-    month: 'Jan',
-    receitas: 5200,
-    despesas: 3100,
-  },
-  {
-    month: 'Fev',
-    receitas: 6100,
-    despesas: 3500,
-  },
-  {
-    month: 'Mar',
-    receitas: 5800,
-    despesas: 3900,
-  },
-  {
-    month: 'Abr',
-    receitas: 7200,
-    despesas: 4100,
-  },
-  {
-    month: 'Mai',
-    receitas: 6800,
-    despesas: 3800,
-  },
-  {
-    month: 'Jun',
-    receitas: 7900,
-    despesas: 4500,
-  },
-]
+function IncomeExpenseChart({ transactions = [] }) {
+  const today = new Date()
 
-function IncomeExpenseChart() {
+  const months = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(
+      today.getFullYear(),
+      today.getMonth() - 5 + index,
+      1
+    )
+
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth(),
+      label: date.toLocaleDateString('pt-BR', {
+        month: 'short',
+      }),
+      receitas: 0,
+      despesas: 0,
+    }
+  })
+
+  transactions.forEach((transaction) => {
+    if (!transaction.transaction_date) {
+      return
+    }
+
+    const [year, month] = transaction.transaction_date
+      .slice(0, 10)
+      .split('-')
+      .map(Number)
+
+    const monthData = months.find(
+      (item) =>
+        item.year === year &&
+        item.month === month - 1
+    )
+
+    if (!monthData) {
+      return
+    }
+
+    const amount = Number(transaction.amount) || 0
+
+    if (transaction.type === 'income') {
+      monthData.receitas += amount
+    } else if (transaction.type === 'expense') {
+      monthData.despesas += amount
+    }
+  })
+
+  function formatCurrency(value) {
+    return Number(value).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    })
+  }
+
   return (
     <div className="chart-card">
       <div className="chart-card__header">
@@ -54,19 +77,15 @@ function IncomeExpenseChart() {
 
       <div className="chart-card__content">
         <ResponsiveContainer width="100%" height={320}>
-          <LineChart data={data}>
+          <LineChart data={months}>
             <CartesianGrid strokeDasharray="3 3" />
 
-            <XAxis dataKey="month" />
+            <XAxis dataKey="label" />
 
             <YAxis />
 
             <Tooltip
-              formatter={(value) =>
-                `R$ ${value.toLocaleString('pt-BR', {
-                  minimumFractionDigits: 2,
-                })}`
-              }
+              formatter={(value) => formatCurrency(value)}
             />
 
             <Legend />

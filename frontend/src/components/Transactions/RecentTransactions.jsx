@@ -3,52 +3,44 @@ import {
   Car,
   BriefcaseBusiness,
   Gamepad2,
+  Heart,
+  House,
+  BookOpen,
+  Plane,
+  Package,
+  Wallet,
 } from 'lucide-react'
 
 import './RecentTransactions.css'
 
-const transactions = [
-  {
-    id: 1,
-    description: 'Supermercado',
-    category: 'Alimentação',
-    type: 'expense',
-    amount: 320,
-    icon: ShoppingCart,
-  },
-  {
-    id: 2,
-    description: 'Combustível',
-    category: 'Transporte',
-    type: 'expense',
-    amount: 180,
-    icon: Car,
-  },
-  {
-    id: 3,
-    description: 'Salário',
-    category: 'Receita',
-    type: 'income',
-    amount: 5200,
-    icon: BriefcaseBusiness,
-  },
-  {
-    id: 4,
-    description: 'Steam',
-    category: 'Lazer',
-    type: 'expense',
-    amount: 89.9,
-    icon: Gamepad2,
-  },
-]
+const categoryIcons = {
+  Alimentação: ShoppingCart,
+  Transporte: Car,
+  Moradia: House,
+  Lazer: Gamepad2,
+  Saúde: Heart,
+  Educação: BookOpen,
+  Trabalho: BriefcaseBusiness,
+  Viagem: Plane,
+  Outros: Package,
+}
 
-function RecentTransactions() {
+function RecentTransactions({ transactions = [] }) {
   function formatCurrency(value) {
-    return value.toLocaleString('pt-BR', {
+    return Number(value).toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     })
   }
+
+  const recentTransactions = [...transactions]
+    .sort((a, b) => {
+      const dateA = a.transaction_date || a.date || ''
+      const dateB = b.transaction_date || b.date || ''
+
+      return dateB.localeCompare(dateA)
+    })
+    .slice(0, 5)
 
   return (
     <section className="recent-transactions">
@@ -58,42 +50,57 @@ function RecentTransactions() {
           <span>Últimas movimentações financeiras</span>
         </div>
 
-        <a href="/transactions" className="recent-transactions__link">
+        <a
+          href="/transactions"
+          className="recent-transactions__link"
+        >
           Ver todas →
         </a>
       </div>
 
       <div className="recent-transactions__list">
-        {transactions.map((transaction) => {
-          const Icon = transaction.icon
+        {recentTransactions.length > 0 ? (
+          recentTransactions.map((transaction) => {
+            const category =
+              transaction.category ||
+              transaction.category_name ||
+              'Sem categoria'
 
-          return (
-            <div
-              key={transaction.id}
-              className="recent-transactions__item"
-            >
-              <div className="recent-transactions__icon">
-                <Icon size={20} />
-              </div>
+            const Icon =
+              categoryIcons[category] || Wallet
 
-              <div className="recent-transactions__info">
-                <strong>{transaction.description}</strong>
-                <span>{transaction.category}</span>
-              </div>
-
-              <strong
-                className={`recent-transactions__amount ${
-                  transaction.type === 'income'
-                    ? 'recent-transactions__amount--income'
-                    : 'recent-transactions__amount--expense'
-                }`}
+            return (
+              <div
+                key={transaction.id}
+                className="recent-transactions__item"
               >
-                {transaction.type === 'income' ? '+' : '-'}
-                {formatCurrency(transaction.amount)}
-              </strong>
-            </div>
-          )
-        })}
+                <div className="recent-transactions__icon">
+                  <Icon size={20} />
+                </div>
+
+                <div className="recent-transactions__info">
+                  <strong>{transaction.description}</strong>
+                  <span>{category}</span>
+                </div>
+
+                <strong
+                  className={`recent-transactions__amount ${
+                    transaction.type === 'income'
+                      ? 'recent-transactions__amount--income'
+                      : 'recent-transactions__amount--expense'
+                  }`}
+                >
+                  {transaction.type === 'income' ? '+' : '-'}
+                  {formatCurrency(transaction.amount)}
+                </strong>
+              </div>
+            )
+          })
+        ) : (
+          <p className="recent-transactions__empty">
+            Nenhuma transação cadastrada.
+          </p>
+        )}
       </div>
     </section>
   )
